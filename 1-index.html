@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JD Reality Check</title>
+<style>
+  :root {
+    --page: #fafafa;
+    --card: #ffffff;
+    --ink: #1a1a1a;
+    --ink-2: #5c5c5c;
+    --hairline: #e3e3e3;
+    --warn-bg: #fff7e6;
+    --warn-border: #f0d9a8;
+    --note-bg: #eef5ff;
+    --note-border: #c3d9f5;
+    --accent: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px 16px 64px;
+  }
+  .card { max-width: 720px; margin: 0 auto; background: var(--card); border: 1px solid var(--hairline); border-radius: 12px; padding: 28px 24px 32px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
+  .fact-line { color: var(--ink-2); font-size: 14px; margin: 0 0 12px; }
+  .intro { color: var(--ink-2); margin: 0 0 20px; }
+  .group { border-top: 1px solid var(--hairline); padding: 20px 0 4px; margin-top: 20px; }
+  .group:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+  .group-label { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 6px; }
+  label { display: block; font-size: 14px; color: var(--ink-2); margin: 12px 0 4px; }
+  input[type="text"], textarea {
+    width: 100%; border: 1px solid var(--hairline); border-radius: 6px; padding: 10px 12px;
+    font: inherit; color: var(--ink); background: var(--page);
+  }
+  textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; resize: vertical; }
+  button {
+    font: inherit; border-radius: 6px; border: 1px solid var(--accent); padding: 9px 16px;
+    background: var(--accent); color: #fff; cursor: pointer; margin-top: 12px;
+  }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--ink); border-color: var(--hairline); }
+  button.secondary { background: transparent; color: var(--ink); border-color: var(--ink); }
+  button.compact { padding: 4px 10px; font-size: 13px; margin-top: 6px; }
+  .caption { font-size: 13px; color: var(--ink-2); margin: 6px 0 0; }
+  .callout { border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-size: 14.5px; }
+  .callout.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); }
+  .callout.note { background: var(--note-bg); border: 1px solid var(--note-border); }
+  .callout .callout-title { font-weight: 600; display: block; margin-bottom: 2px; }
+  ul { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .facts { display: flex; gap: 32px; flex-wrap: wrap; margin: 8px 0; }
+  .facts .fact .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  .facts .fact .v { font-weight: 600; }
+  .req { border-top: 1px solid var(--hairline); padding: 12px 0 14px; }
+  .req.off { opacity: 0.45; }
+  .req-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .req-text { flex: 1 1 auto; min-width: 0; }
+  .req-label { flex: 0 0 auto; margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--hairline); color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+  .choices { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .choices .choice {
+    border: 1px solid var(--hairline); border-radius: 999px; padding: 5px 14px; font-size: 14px;
+    background: transparent; color: var(--ink); cursor: pointer; margin-top: 0;
+  }
+  .choices .choice.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .closing { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--hairline); color: var(--ink-2); font-size: 13.5px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Stage: paste -->
+  <div id="stage-paste">
+    <h1>JD Reality Check</h1>
+    <p class="fact-line">Free. Nothing uploaded.</p>
+    <p class="intro">Paste a job description. Get the requirements it actually states, questions worth asking about it, and a worksheet for your own evidence. No score, no verdict. The tool sends nothing you type anywhere: it runs entirely in this page.</p>
+
+    <div class="group">
+      <p class="group-label">Step 1</p>
+      <h2>Paste the posting</h2>
+      <label for="posting-name">Posting name (optional)</label>
+      <input type="text" id="posting-name">
+      <label for="jd-paste">Job description</label>
+      <textarea id="jd-paste" rows="10" placeholder="Paste the full text of the job description here"></textarea>
+      <button id="btn-analyse" disabled>Read this posting</button>
+      <p class="caption hidden" id="paste-hint">Paste a little more of the posting first.</p>
+    </div>
+
+    <div class="group" id="honesty-paste"></div>
+    <p class="closing">Pasted text is held only in this page while it is open. Checking another posting clears it.</p>
+  </div>
+
+  <!-- Stage: review -->
+  <div id="stage-review" class="hidden">
+    <h1 id="review-title">JD Reality Check</h1>
+    <p class="fact-line" id="review-count"></p>
+    <p class="intro">Everything marked as stated was found in the pasted text. Labels such as Minimum or Preferred come only from the posting's own section words. Edit freely: remove what does not belong, add what was missed.</p>
+
+    <div class="group">
+      <p class="group-label">Facts from the posting</p>
+      <div class="facts">
+        <div class="fact"><div class="k">Salary</div><div class="v" id="fact-salary"></div></div>
+        <div class="fact"><div class="k">Deadline</div><div class="v" id="fact-deadline"></div></div>
+      </div>
+      <div id="fact-captions"></div>
+    </div>
+
+    <div class="group hidden" id="questions-group">
+      <p class="group-label">Worth asking</p>
+      <div id="questions-list"></div>
+      <p class="caption">Questions, not verdicts. Mismatches can be data-entry artifacts, so ask rather than assume.</p>
+    </div>
+
+    <div id="gapline-slot"></div>
+
+    <div class="group hidden" id="wording-group">
+      <p class="group-label">Broad wording</p>
+      <p>These stated requirements use broad wording you may want to clarify in an interview:</p>
+      <ul id="wording-list"></ul>
+    </div>
+
+    <div class="group">
+      <p class="group-label" id="reqs-label">Step 2: requirements as stated</p>
+      <div id="req-warnings"></div>
+      <div id="req-list"></div>
+      <label for="new-item">Add a requirement the tool missed (optional)</label>
+      <input type="text" id="new-item">
+      <button class="secondary compact" id="btn-add">Add</button>
+    </div>
+
+    <div class="group">
+      <p class="group-label">Step 3: your record</p>
+      <p id="record-empty">Mark at least one requirement above and your record appears here.</p>
+      <div id="record-body" class="hidden">
+        <div id="record-groups"></div>
+        <p class="caption" id="record-unmarked"></p>
+        <p class="caption">No total, no percentage, no verdict. What to do with this record is your call.</p>
+        <button class="secondary" id="btn-copy">Copy this record</button>
+        <p class="caption hidden" id="copy-done">Copied.</p>
+      </div>
+    </div>
+
+    <button class="ghost" id="btn-reset">Check another posting</button>
+
+    <div class="group" id="honesty-review"></div>
+    <p class="closing">Pasted text and marks are held only in this page while it is open. Nothing is saved or sent.</p>
+  </div>
+
+</div>
+
+<script>
+// ===PARSE-BEGIN===
+const MONTH_RE = '(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)';
+
+function cleanLine(line) {
+    return line.replace(/^[\s\-\*•–—·]+/, '').replace(/^\d{1,2}[\.\)]\s+/, '').replace(/\*/g, '').trim();
+}
+
+function parseJD(text) {
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const headerRe = /(requirement|qualification|what you.{0,15}(need|bring)|who you are|you.{0,3}ll (have|need)|must.have|nice.to.have|preferred|minimum|skills required|what we.{0,15}(looking|need)|we.{0,4}d love to hear|if you have|looking for)/i;
+    const otherSectionRe = /^(responsibilit|duties|about (us|the role|you|this)|the role|your role|role overview|what you.{0,12}do|day.to.day|benefits|perks|equal opportunity|our (team|mission|culture)|why join|interview process|how to apply|life at)/i;
+    const metaRe = /^[A-Z][A-Za-z0-9 &()\/]{0,24}:\s*\S/;
+    const bulletRe = /^([\-\*•–·]|\d{1,2}[\.\)])\s+/;
+    const isHeader = (l) => {
+        if (bulletRe.test(l) && !/^\*{2}/.test(l)) return false;
+        const t = l.replace(/^#+\s*/, '').replace(/\*/g, '').trim();
+        if (t.length > 80 || /[.!?]$/.test(t.replace(/:$/, ''))) return /:$/.test(t) || headerRe.test(t) || otherSectionRe.test(t);
+        return /^#/.test(l) || /^\*{2}/.test(l) || /:$/.test(t) || headerRe.test(t) || otherSectionRe.test(t);
+    };
+    const headerText = (l) => l.replace(/^#+\s*/, '').replace(/\*/g, '').trim();
+
+    let section = null;
+    let inSection = false;
+    const sectioned = [];
+    const loose = [];
+    for (const raw of lines) {
+        if (isHeader(raw)) {
+            const t = headerText(raw);
+            if (/minimum|required|must/i.test(t)) { inSection = true; section = 'Minimum'; }
+            else if (/preferred|nice|plus|bonus/i.test(t)) { inSection = true; section = 'Preferred'; }
+            else if (headerRe.test(t)) { inSection = true; section = 'Stated'; }
+            else { inSection = false; section = null; }
+            continue;
+        }
+        if (bulletRe.test(raw)) {
+            const t = cleanLine(raw);
+            if (t.length < 12 || t.length > 320) continue;
+            if (metaRe.test(t)) continue;
+            if (inSection) sectioned.push({ text: t, label: section || 'Stated' });
+            else loose.push(t);
+        }
+    }
+
+    let found = sectioned.length > 0;
+    let list = found ? sectioned : loose.map((t) => ({ text: t, label: 'Stated' }));
+    const seen = new Set();
+    list = list.filter((it) => { const k = it.text.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    const capped = list.length > 20;
+    list = list.slice(0, 20);
+
+    // Salary, neutral fact. A currency amount counts only when the line is about pay or is a
+    // bare range; revenue and funding lines are rejected explicitly.
+    const moneyRe = /(₹|\$)\s?[\d,]{2,}|\b\d+(\.\d+)?\s?(lpa|lakhs?|usd|per annum)\b/i;
+    const rejectRe = /revenue|funding|raised|valuation|turnover|profit|arr\b/i;
+    const payRe = /salary|compensation|pay|stipend|ctc|base|per (year|month|annum)|annually/i;
+    const salaryLine = lines.find((l) => moneyRe.test(l) && !rejectRe.test(l) && (payRe.test(l) || l.replace(/\*/g, '').trim().length <= 60));
+    const salary = salaryLine ? cleanLine(salaryLine) : null;
+
+    // Deadline: every candidate line is quoted verbatim, each with its parsed date when it
+    // has one. No open/closed or upcoming/passed status: the posting's timezone and cutoff
+    // are unknown, so a relative verdict could be wrong. Multiple candidates get an
+    // ambiguity warning. A date without a year is quoted as year-unspecified, never guessed.
+    const dlRe = /(apply by|applications? (?:deadline|close|closes|due)|submit(?:ted)? by|deadline|complete your application|before end of day|no later than|applications? (?:open|accepted) until)/i;
+    const d4g = new RegExp('(' + MONTH_RE + ')\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}(?:st|nd|rd|th)?\\s+(' + MONTH_RE + ')\\s*,?\\s+\\d{4}', 'gi');
+    const dateNoYearRe = new RegExp('(' + MONTH_RE + ')\\s+\\d{1,2}(?:st|nd|rd|th)?\\b|\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(' + MONTH_RE + ')\\b', 'i');
+    const deadlineLines = [];
+    const dlSeen = new Set();
+    lines.forEach((l) => {
+        if (!dlRe.test(l)) return;
+        const quote = cleanLine(l);
+        if (dlSeen.has(quote)) return;
+        dlSeen.add(quote);
+        const dates = [];
+        for (const m of l.matchAll(d4g)) {
+            const d = new Date(m[0].replace(/(\d)(st|nd|rd|th)/, '$1'));
+            if (!isNaN(d.getTime())) dates.push(d);
+        }
+        const yearUnspecified = dates.length === 0 && dateNoYearRe.test(l);
+        deadlineLines.push({ quote, dates, yearUnspecified });
+    });
+    const deadline = deadlineLines.length ? { lines: deadlineLines, multiple: deadlineLines.length > 1 || deadlineLines.some((x) => x.dates.length > 1) } : null;
+
+    // Question 1: junior level wording vs a multi-year ask. Lines that deny the level
+    // ("not an entry-level role") are not a contradiction and are excluded.
+    const levelLine = lines.find((l) => /entry.level|early career|intern(ship)?\b|junior|fresher|fresh grad|new grad|university graduate/i.test(l) && !/\bnot\b[^.]{0,25}(entry.level|junior|intern|fresher|new grad)/i.test(l));
+    let yearsLine = null;
+    let yearsN = 0;
+    for (const l of lines) {
+        const m = l.match(/(\d{1,2})\s*\+?\s*(?:years|yrs)/i);
+        if (m) { const n = parseInt(m[1], 10); if (n >= 3) { yearsLine = l; yearsN = n; break; } }
+    }
+    const questions = [];
+    if (levelLine && yearsLine) {
+        questions.push('The posting signals a junior level with "' + cleanLine(levelLine) + '" but also asks for "' + cleanLine(yearsLine) + '". Worth asking: how much experience is actually expected?');
+    }
+
+    // Question 2: ownership language vs guidance language.
+    const ownLine = lines.find((l) => /owning|high.ownership|own the|strategy & vision|product strategy/i.test(l));
+    const guideLine = lines.find((l) => /under guidance|with guidance|0.2 years|entry level support/i.test(l));
+    if (ownLine && guideLine) {
+        questions.push('The posting promises "' + cleanLine(ownLine) + '" but also says "' + cleanLine(guideLine) + '". Worth asking: how much independent ownership does the role really carry?');
+    }
+
+    // Broad wording, flagged only on lines the tool extracted as stated requirements,
+    // never on company marketing paragraphs.
+    const vagueRe = /\b(rockstar|ninja|guru|fast.paced|dynamic|self.starter|hit the ground running|wear many hats|visionary|passionate)\b/i;
+    const wording = list.filter((it) => vagueRe.test(it.text)).slice(0, 3).map((it) => it.text);
+
+    // The posting's own gap policy.
+    const gapLine = lines.find((l) => /encourage you to apply|align perfectly|even if you don.{0,3}t meet|not meet every/i.test(l));
+
+    return { items: list, usedFallback: !found, capped, salary, deadline, questions, wording, gapLine: gapLine ? cleanLine(gapLine) : null };
+}
+
+function fmtDate(d) {
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+// ===PARSE-END===
+
+(function () {
+    const $ = (id) => document.getElementById(id);
+    let items = [];
+    let meta = null;
+    let status = {};
+    let notes = {};
+    let nextId = 1;
+
+    const jdPaste = $('jd-paste');
+    const btnAnalyse = $('btn-analyse');
+
+    jdPaste.addEventListener('input', () => {
+        const len = jdPaste.value.trim().length;
+        btnAnalyse.disabled = len < 80;
+        $('paste-hint').classList.toggle('hidden', !(len > 0 && len < 80));
+    });
+
+    btnAnalyse.addEventListener('click', () => {
+        const parsed = parseJD(jdPaste.value);
+        items = parsed.items.map((it) => ({ id: nextId++, text: it.text, label: it.label, included: true }));
+        meta = parsed;
+        status = {};
+        notes = {};
+        $('stage-paste').classList.add('hidden');
+        $('stage-review').classList.remove('hidden');
+        renderReview();
+        window.scrollTo(0, 0);
+    });
+
+    $('btn-reset').addEventListener('click', () => {
+        $('stage-review').classList.add('hidden');
+        $('stage-paste').classList.remove('hidden');
+        jdPaste.value = '';
+        $('posting-name').value = '';
+        btnAnalyse.disabled = true;
+        $('paste-hint').classList.add('hidden');
+        items = []; meta = null; status = {}; notes = {};
+        window.scrollTo(0, 0);
+    });
+
+    $('btn-add').addEventListener('click', () => {
+        const t = $('new-item').value.trim();
+        if (t.length >= 4) {
+            items.push({ id: nextId++, text: t, label: 'Added by you', included: true });
+            $('new-item').value = '';
+            renderReqs();
+            renderRecord();
+        }
+    });
+
+    $('btn-copy').addEventListener('click', () => {
+        const text = recordText();
+        const done = () => {
+            $('copy-done').classList.remove('hidden');
+            setTimeout(() => $('copy-done').classList.add('hidden'), 2000);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, () => legacyCopy(text, done));
+        } else {
+            legacyCopy(text, done);
+        }
+    });
+
+    function legacyCopy(text, done) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(ta);
+    }
+
+    function el(tag, className, text) {
+        const e = document.createElement(tag);
+        if (className) e.className = className;
+        if (text !== undefined) e.textContent = text;
+        return e;
+    }
+
+    function included() { return items.filter((it) => it.included); }
+
+    function renderReview() {
+        const inc = included();
+        $('review-title').textContent = $('posting-name').value.trim() || 'JD Reality Check';
+        $('review-count').textContent = inc.length + ' stated requirements';
+
+        $('fact-salary').textContent = meta.salary ? 'Stated' : 'Not stated';
+        let dlText = 'Not stated';
+        if (meta.deadline) {
+            if (meta.deadline.multiple) dlText = 'Stated, see quoted lines';
+            else {
+                const first = meta.deadline.lines[0];
+                dlText = first.dates.length ? 'Stated: ' + fmtDate(first.dates[0]) : (first.yearUnspecified ? 'Stated, year unspecified' : 'Stated');
+            }
+        }
+        $('fact-deadline').textContent = dlText;
+
+        const caps = $('fact-captions');
+        caps.innerHTML = '';
+        if (meta.salary) caps.appendChild(el('p', 'caption', 'Salary line, quoted: "' + meta.salary + '"'));
+        if (meta.deadline) {
+            meta.deadline.lines.forEach((x) => {
+                let t = 'Deadline line, quoted: "' + x.quote + '"';
+                if (x.dates.length) t += ' (date' + (x.dates.length > 1 ? 's' : '') + ': ' + x.dates.map(fmtDate).join(', ') + ')';
+                else if (x.yearUnspecified) t += ' (year unspecified)';
+                caps.appendChild(el('p', 'caption', t));
+            });
+            if (meta.deadline.multiple) caps.appendChild(el('p', 'caption', 'Multiple possible deadline lines found. Verify which one applies against the original posting. This tool does not verify whether a posting is still open.'));
+        }
+
+        const qg = $('questions-group');
+        const ql = $('questions-list');
+        ql.innerHTML = '';
+        if (meta.questions.length) {
+            qg.classList.remove('hidden');
+            meta.questions.forEach((q) => {
+                const c = el('div', 'callout warn');
+                c.appendChild(el('span', 'callout-title', 'Worth asking'));
+                c.appendChild(document.createTextNode(q));
+                ql.appendChild(c);
+            });
+        } else qg.classList.add('hidden');
+
+        const gs = $('gapline-slot');
+        gs.innerHTML = '';
+        if (meta.gapLine) {
+            const c = el('div', 'callout note');
+            c.appendChild(el('span', 'callout-title', 'The posting answers the gap question itself'));
+            c.appendChild(document.createTextNode('Quoted: "' + meta.gapLine + '"'));
+            gs.appendChild(c);
+        }
+
+        const wg = $('wording-group');
+        const wl = $('wording-list');
+        wl.innerHTML = '';
+        if (meta.wording.length) {
+            wg.classList.remove('hidden');
+            meta.wording.forEach((w) => wl.appendChild(el('li', null, '"' + w + '"')));
+        } else wg.classList.add('hidden');
+
+        const rw = $('req-warnings');
+        rw.innerHTML = '';
+        if (meta.usedFallback && items.length > 0) {
+            const c = el('div', 'callout warn');
+            c.appendChild(el('span', 'callout-title', 'No clear requirements section found'));
+            c.appendChild(document.createTextNode("The posting did not use recognisable section headers, so every bullet line is listed as a candidate. Remove what does not belong."));
+            rw.appendChild(c);
+        }
+        if (items.length === 0) {
+            const c = el('div', 'callout warn');
+            c.appendChild(el('span', 'callout-title', 'No requirement lines found'));
+            c.appendChild(document.createTextNode('This text has no bullet points the tool could read as requirements. The posting may use a format it cannot read. You can add requirements manually below.'));
+            rw.appendChild(c);
+        }
+        if (meta.capped) rw.appendChild(el('p', 'caption', 'Long posting: only the first 20 candidate lines are shown.'));
+
+        renderReqs();
+        renderRecord();
+        renderHonesty($('honesty-review'));
+    }
+
+    function renderReqs() {
+        const inc = included();
+        $('reqs-label').textContent = 'Step 2: requirements as stated (' + inc.length + ')';
+        $('review-count').textContent = inc.length + ' stated requirements';
+        const list = $('req-list');
+        list.innerHTML = '';
+        items.forEach((it) => {
+            const row = el('div', 'req' + (it.included ? '' : ' off'));
+            const top = el('div', 'req-top');
+            top.appendChild(el('span', 'req-text', it.text));
+            top.appendChild(el('span', 'req-label', it.label));
+            row.appendChild(top);
+            const toggle = el('button', 'ghost compact', it.included ? 'Remove' : 'Keep');
+            toggle.addEventListener('click', () => {
+                it.included = !it.included;
+                renderReqs();
+                renderRecord();
+            });
+            row.appendChild(toggle);
+            if (it.included) {
+                const mark = el('div');
+                const lab = el('p', 'group-label', 'Your evidence');
+                lab.style.marginTop = '10px';
+                mark.appendChild(lab);
+                const choices = el('div', 'choices');
+                [['can', 'Can point to this'], ['partial', 'Partial'], ['gap', 'Gap']].forEach(([key, label]) => {
+                    const b = el('button', 'choice' + (status[it.id] === key ? ' selected' : ''), label);
+                    b.addEventListener('click', () => {
+                        status[it.id] = status[it.id] === key ? undefined : key;
+                        if (status[it.id] === undefined) delete status[it.id];
+                        renderReqs();
+                        renderRecord();
+                    });
+                    choices.appendChild(b);
+                });
+                mark.appendChild(choices);
+                if (status[it.id] === 'can' || status[it.id] === 'partial') {
+                    const nl = el('label', null, 'Your line (optional)');
+                    nl.setAttribute('for', 'note-' + it.id);
+                    mark.appendChild(nl);
+                    const input = el('input');
+                    input.type = 'text';
+                    input.id = 'note-' + it.id;
+                    input.value = notes[it.id] || '';
+                    input.addEventListener('input', () => { notes[it.id] = input.value; });
+                    mark.appendChild(input);
+                }
+                row.appendChild(mark);
+            }
+            list.appendChild(row);
+        });
+    }
+
+    function renderRecord() {
+        const inc = included();
+        const marked = inc.filter((it) => status[it.id]);
+        const unmarked = inc.length - marked.length;
+        $('record-empty').classList.toggle('hidden', marked.length > 0);
+        $('record-body').classList.toggle('hidden', marked.length === 0);
+        if (!marked.length) return;
+        const groups = $('record-groups');
+        groups.innerHTML = '';
+        [['can', 'Can point to this'], ['partial', 'Partial'], ['gap', 'Gap']].forEach(([key, label]) => {
+            const rows = inc.filter((it) => status[it.id] === key);
+            if (!rows.length) return;
+            const g = el('div', 'group');
+            g.appendChild(el('p', 'group-label', label + ' (' + rows.length + ')'));
+            const ul = el('ul');
+            rows.forEach((it) => ul.appendChild(el('li', null, it.text + (notes[it.id] ? ' -- ' + notes[it.id] : ''))));
+            g.appendChild(ul);
+            groups.appendChild(g);
+        });
+        $('record-unmarked').textContent = unmarked > 0 ? unmarked + ' requirement' + (unmarked === 1 ? '' : 's') + ' unmarked.' : '';
+    }
+
+    function recordText() {
+        const inc = included();
+        const linesOut = [];
+        linesOut.push('JD Reality Check record, ' + fmtDate(new Date()));
+        linesOut.push('Posting: ' + ($('posting-name').value.trim() || 'untitled'));
+        linesOut.push('');
+        linesOut.push('Facts from the posting');
+        linesOut.push('Salary: ' + (meta.salary ? 'stated: "' + meta.salary + '"' : 'not stated'));
+        if (meta.deadline) {
+            linesOut.push('Deadline: stated');
+            meta.deadline.lines.forEach((x) => linesOut.push('- "' + x.quote + '"' + (x.dates.length ? ' (date' + (x.dates.length > 1 ? 's' : '') + ': ' + x.dates.map(fmtDate).join(', ') + ')' : x.yearUnspecified ? ' (year unspecified)' : '')));
+            if (meta.deadline.multiple) linesOut.push('Multiple possible deadline lines; verify against the original posting. This tool does not verify whether the posting is still open.');
+        } else linesOut.push('Deadline: not stated');
+        if (meta.questions.length) {
+            linesOut.push('');
+            linesOut.push('Questions worth asking');
+            meta.questions.forEach((q) => linesOut.push('- ' + q));
+        }
+        const groups = [['can', 'Can point to this'], ['partial', 'Partial'], ['gap', 'Gap']];
+        groups.forEach(([key, label]) => {
+            const rows = inc.filter((it) => status[it.id] === key);
+            linesOut.push('');
+            linesOut.push(label + ' (' + rows.length + ')');
+            rows.forEach((it) => linesOut.push('- ' + it.text + (notes[it.id] ? ' -- ' + notes[it.id] : '')));
+        });
+        if (unmarked() > 0) { linesOut.push(''); linesOut.push('Unmarked: ' + unmarked()); }
+        linesOut.push('');
+        linesOut.push('Marked by the candidate, in their own words. This record gives no score and no verdict on whether to apply.');
+        return linesOut.join('\n');
+    }
+
+    function unmarked() {
+        const inc = included();
+        return inc.length - inc.filter((it) => status[it.id]).length;
+    }
+
+    function renderHonesty(mount) {
+        mount.innerHTML = '';
+        mount.appendChild(el('p', 'group-label', 'Honesty'));
+        mount.appendChild(el('h2', null, 'What this tool does not do'));
+        const ul = el('ul');
+        [
+            'Finding requirements is pattern-based and will misread some postings. That is why every list is editable.',
+            'Flags are questions to ask the employer, never verdicts about one.',
+            'It makes no claims about how any applicant tracking system screens resumes.',
+            'It never marks a requirement as met, never totals your marks, and never says whether you should apply.',
+            'The tool sends nothing you type anywhere. What you paste is processed on your device and disappears when you leave.'
+        ].forEach((t) => ul.appendChild(el('li', null, t)));
+        mount.appendChild(ul);
+    }
+
+    renderHonesty($('honesty-paste'));
+})();
+</script>
+</body>
+</html>
