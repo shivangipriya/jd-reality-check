@@ -2,6 +2,8 @@
 
 Paste a job description. Get back what the posting actually states, the questions worth asking about it, and a worksheet for your own evidence. No score, no verdict on whether you should apply.
 
+**Try it:** https://shivangipriya.github.io/jd-reality-check/ - runs in your browser, no signup.
+
 ## What it does
 
 - **Stated requirements, as stated.** Extracts the requirement lines from the posting's own sections. Labels like Minimum or Preferred come only from the posting's own section words, never guessed. Every list is editable: remove what does not belong, add what it missed.
