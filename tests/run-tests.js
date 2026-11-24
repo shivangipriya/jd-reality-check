@@ -56,12 +56,39 @@ check('single deadline is not ambiguous', oneDeadline.deadline.multiple === fals
 const twoDeadlines = parseJD('Product Manager\n\nApply by March 5, 2027.\nApplication deadline: April 10, 2027.\n\nRequirements:\n- Strong communication skills');
 check('two deadline lines get an ambiguity warning', twoDeadlines.deadline.multiple === true);
 
-// KNOWN LIMITATION (documents current behavior, not a bug fix): the deadline
-// detector matches "Submit by April 10" but not "Submit your application by
-// April 10" - words between "submit" and "by" are not yet accepted. This test
-// pins the current miss so it is visible; flip it when the parser improves.
-const submitMiss = parseJD('Product Manager\n\nSubmit your application by April 10, 2027.\n\nRequirements:\n- Strong communication skills');
-check('known limitation: "Submit your application by <date>" is not yet detected', submitMiss.deadline === null);
+const submitApp = parseJD('Product Manager\n\nSubmit your application by April 10, 2027.\n\nRequirements:\n- Strong communication skills');
+check('"Submit your application by <date>" deadline parses one date', submitApp.deadline !== null && submitApp.deadline.lines[0].dates.length === 1 && /Apr 2027/.test(fmtDate(submitApp.deadline.lines[0].dates[0])));
+
+const mixedLevels = parseJD('Product Manager\n\nMinimum requirements:\n- 2+ years of product experience\n- MBA preferred');
+check('line-level "preferred" overrides the Minimum section label', mixedLevels.items.some((it) => /MBA preferred/.test(it.text) && it.label === 'Preferred'));
+const yearsItem = mixedLevels.items.find((it) => /2\+ years/.test(it.text));
+check('other lines under a Minimum header keep the Minimum label', yearsItem !== undefined && yearsItem.label === 'Minimum');
+const prefHeader = parseJD('Product Manager\n\nPreferred qualifications:\n- SQL proficiency');
+check('Preferred section labels unchanged by the override', prefHeader.items.length === 1 && prefHeader.items[0].label === 'Preferred');
+
+const compBonus = parseJD('Product Manager\n\nMinimum requirements:\n- Own the sales bonus structure and annual payouts');
+check('compensation "bonus structure" line is not relabelled Preferred', compBonus.items.length === 1 && compBonus.items[0].label === 'Minimum');
+
+const negated = parseJD('Product Manager\n\nMinimum requirements:\n- Familiarity with waterfall is not preferred for this role');
+check('negated preference ("not preferred") gets the neutral Stated label', negated.items.length === 1 && negated.items[0].label === 'Stated' && /not preferred/.test(negated.items[0].text));
+
+const mixedLine = parseJD('Product Manager\n\nMinimum requirements:\n- 5+ years of experience required; MBA preferred');
+check('mixed mandatory/preferred line gets the neutral Stated label, text preserved', mixedLine.items.length === 1 && mixedLine.items[0].label === 'Stated' && /MBA preferred/.test(mixedLine.items[0].text));
+
+const softReq = parseJD('Product Manager\n\nMinimum requirements:\n- Master\'s degree preferred, not required');
+check('"preferred, not required" line is labelled Preferred', softReq.items.length === 1 && softReq.items[0].label === 'Preferred');
+
+const plusLine = parseJD('Product Manager\n\nRequirements:\n- Fintech experience is a plus');
+check('"is a plus" line is labelled Preferred', plusLine.items.length === 1 && plusLine.items[0].label === 'Preferred');
+
+const pluralSubmit = parseJD('Product Manager\n\nSubmit your applications by May 3, 2027.\n\nRequirements:\n- Strong communication skills');
+check('plural "Submit your applications by <date>" parses one date', pluralSubmit.deadline !== null && pluralSubmit.deadline.lines[0].dates.length === 1);
+
+const submitBy = parseJD('Product Manager\n\nSubmit by April 10, 2027.\n\nRequirements:\n- Strong communication skills');
+check('existing "Submit by <date>" format still parses', submitBy.deadline !== null && submitBy.deadline.lines[0].dates.length === 1);
+
+const submittedBy = parseJD('Product Manager\n\nSubmitted by April 10, 2027.\n\nRequirements:\n- Strong communication skills');
+check('existing "Submitted by <date>" format still parses', submittedBy.deadline !== null && submittedBy.deadline.lines[0].dates.length === 1);
 
 const noYear = parseJD('Product Manager\n\nApply by March 5.\n\nRequirements:\n- Strong communication skills');
 check('date without a year is flagged year-unspecified', noYear.deadline.lines[0].yearUnspecified === true && noYear.deadline.lines[0].dates.length === 0);
