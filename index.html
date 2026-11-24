@@ -100,7 +100,7 @@
   <div id="stage-review" class="hidden">
     <h1 id="review-title">JD Reality Check</h1>
     <p class="fact-line" id="review-count"></p>
-    <p class="intro">Everything marked as stated was found in the pasted text. Labels such as Minimum or Preferred come only from the posting's own section words. Edit freely: remove what does not belong, add what was missed.</p>
+    <p class="intro">Everything marked as stated was found in the pasted text. Labels such as Minimum or Preferred come from the posting's own section words, or from the requirement line's own wording. Edit freely: remove what does not belong, add what was missed.</p>
 
     <div class="group">
       <p class="group-label">Facts from the posting</p>
@@ -193,7 +193,25 @@ function parseJD(text) {
             const t = cleanLine(raw);
             if (t.length < 12 || t.length > 320) continue;
             if (metaRe.test(t)) continue;
-            if (inSection) sectioned.push({ text: t, label: section || 'Stated' });
+            if (inSection) {
+                // Explicit preference wording in the requirement line itself overrides the
+                // section label, but only when the line is unambiguous: a preference phrase
+                // ("MBA preferred", "nice to have", "a plus", "an added bonus", "bonus
+                // points") that is not negated, and no mandatory wording in the same line.
+                // A preference phrase that is negated ("not preferred") or mixed with
+                // mandatory wording in the same line is labelled with the neutral "Stated"
+                // instead of asserting either level. Compensation uses of "bonus" do not
+                // match the phrase list at all and keep the section label.
+                const stripped = t.replace(/\bnot\s+(required|mandatory)\b/gi, '');
+                const PREF_PHRASE = /(\bpreferred\b|\bnice[- ]to[- ]have\b|\bgood[- ]to[- ]have\b|\ba plus\b|\badded bonus\b|\bbonus points\b)/i;
+                const hasPrefPhrase = PREF_PHRASE.test(stripped);
+                const linePreferred = hasPrefPhrase
+                    && !/\bnot\s+preferred\b/i.test(stripped)
+                    && !/\b(required|must[- ]have|mandatory|minimum)\b/i.test(stripped);
+                const ambiguousLevel = hasPrefPhrase && !linePreferred;
+                const label = linePreferred ? 'Preferred' : ambiguousLevel ? 'Stated' : (section || 'Stated');
+                sectioned.push({ text: t, label });
+            }
             else loose.push(t);
         }
     }
@@ -217,7 +235,7 @@ function parseJD(text) {
     // has one. No open/closed or upcoming/passed status: the posting's timezone and cutoff
     // are unknown, so a relative verdict could be wrong. Multiple candidates get an
     // ambiguity warning. A date without a year is quoted as year-unspecified, never guessed.
-    const dlRe = /(apply by|applications? (?:deadline|close|closes|due)|submit(?:ted)? by|deadline|complete your application|before end of day|no later than|applications? (?:open|accepted) until)/i;
+    const dlRe = /(apply by|applications? (?:deadline|close|closes|due)|submit(?:ted)?(?: your applications?)? by|deadline|complete your application|before end of day|no later than|applications? (?:open|accepted) until)/i;
     const d4g = new RegExp('(' + MONTH_RE + ')\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}(?:st|nd|rd|th)?\\s+(' + MONTH_RE + ')\\s*,?\\s+\\d{4}', 'gi');
     const dateNoYearRe = new RegExp('(' + MONTH_RE + ')\\s+\\d{1,2}(?:st|nd|rd|th)?\\b|\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(' + MONTH_RE + ')\\b', 'i');
     const deadlineLines = [];
